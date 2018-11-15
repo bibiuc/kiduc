@@ -6,6 +6,8 @@ function Kiduc() {
   var scope = {};
   var hooks = {};
   var cache = {};
+  var running = true;
+  var tasks = [];
   var slice = Array.prototype.slice;
   var hookKeys = ['onBeforeSet', 'onAfterSet', 'onBeforeRun', 'onAfterRun', 'onRunError'];
   var runHooks = function(name) {
@@ -75,32 +77,31 @@ function Kiduc() {
     }
     cache[id] = value;
   };
-  this.run = async function(id) {
-    var _args = arguments;
-    var args = slice.call(arguments, 1);
-    var key,
-      i = 0,
-      len = args.length;
-    for(;i < len; i++) {
-      key = args[i];
-      if (key instanceof Array) {
-        args[i] = await self.run.apply(self, key) || key;
-      } else if (typeof key == 'string') {
-        args[i] = self.cache(key) || key;
-      }
-    }
-    return new Promise(function(resolve) {
+  this.run = function(id) {
+    tasks.push(arguments);
+  };
+  this.stop = function() {
+    running = false;
+    tasks = [];
+  };
+  this.start = function() {
+    process.nextTick(tasks.forEach.bind(tasks, function (args) {
       try {
-        runHooks('onBeforeRun', _args, args);
-        args = (scope[id]).apply(null, args);
-        resolve(args);
-        runHooks('onAfterRun', _args, args);
+        runHooks('onBeforeRun', args);
+        (scope[args[0]]).apply(null, slice.call(args, 1));
+        runHooks('onAfterRun', args);
       } catch(e) {
         console.error('base_run ' + self.word('function_error'), e);
-        runHooks('onRunError', _args, e);
-        resolve(undefined);
+        runHooks('onRunError', args, e);
       }
-    });
+    }), 0);
+    tasks = [];
+    if (running) {
+      setTimeout(function() {
+          self.start();
+      });
+    }
   };
+  self.start();
 }
  module.exports = Kiduc;

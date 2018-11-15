@@ -18,5 +18,6 @@
   "bugs": {
     "url": "https://github.com/bibiuc/kiduc/issues"
   },
-  "homepage": "https://github.com/bibiuc/kiduc#readme"
+  "homepage": "https://github.com/bibiuc/kiduc#readme",
+  "dependencies": {}
 }
