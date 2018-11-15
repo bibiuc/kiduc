@@ -78,7 +78,10 @@ function Kiduc() {
     cache[id] = value;
   };
   this.run = function(id) {
-    tasks.push(arguments);
+    var args = slice.call(arguments, 1);
+    return new Promise(function (resolve) {
+      tasks.push([id, resolve].concat(args));
+    });
   };
   this.stop = function() {
     running = false;
@@ -86,11 +89,18 @@ function Kiduc() {
   };
   this.start = function() {
     process.nextTick(tasks.forEach.bind(tasks, function (args) {
+      var ret,
+        id = args[0],
+        resolve = args[1],
+        handle = scope[id],
+        args = slice.call(args, 2);
       try {
         runHooks('onBeforeRun', args);
-        (scope[args[0]]).apply(null, slice.call(args, 1));
-        runHooks('onAfterRun', args);
+        ret = handle.apply({id: id}, args);
+        runHooks('onAfterRun', args, ret);
+        resolve(ret);
       } catch(e) {
+        resolve(undefined);
         console.error('base_run ' + self.word('function_error'), e);
         runHooks('onRunError', args, e);
       }
