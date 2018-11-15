@@ -46,7 +46,8 @@ function Kiduc() {
       'arguments_error': '参数错误',
       'scope_key_reset': '已存在的值,将被重置',
       'unsafe_set': '不安全的设置',
-      'function_error': '运行时错误'
+      'function_error': '运行时错误',
+      'no_handle': '未找到函数'
     }[word];
   };
   this.set = function(id, func) {
@@ -78,10 +79,14 @@ function Kiduc() {
     cache[id] = value;
   };
   this.run = function(id) {
-    var args = slice.call(arguments, 1);
-    return new Promise(function (resolve) {
-      tasks.push([id, resolve].concat(args));
-    });
+    if (scope[id]) {
+      var args = slice.call(arguments, 1);
+      return new Promise(function (resolve) {
+        tasks.push([id, resolve].concat(args));
+      });
+    }
+    console.log('base_run', self.word('no_handle'), id);
+    return Promise.resolve(undefined);
   };
   this.stop = function() {
     running = false;
