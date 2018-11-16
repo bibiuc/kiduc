@@ -78,11 +78,14 @@ function Kiduc() {
     }
     cache[id] = value;
   };
-  this.run = function(id) {
-    if (scope[id]) {
+  this.run = function(that) {
+    that = (typeof that == 'string') ? {id: that} : that;
+    var id = that.id,
+        handle = scope[id];
+    if (handle) {
       var args = slice.call(arguments, 1);
       return new Promise(function (resolve) {
-        tasks.push([id, resolve].concat(args));
+        tasks.push([handle, that, resolve].concat(args));
       });
     }
     console.log('base_run', self.word('no_handle'), id);
@@ -95,19 +98,19 @@ function Kiduc() {
   this.start = function() {
     process.nextTick(tasks.forEach.bind(tasks, function (args) {
       var ret,
-        id = args[0],
-        resolve = args[1],
-        handle = scope[id],
-        args = slice.call(args, 2);
+        handle = args[0],
+        that = args[1],
+        resolve = args[2],
+        args = slice.call(args, 3);
       try {
-        runHooks('onBeforeRun', args);
-        ret = handle.apply({id: id}, args);
-        runHooks('onAfterRun', args, ret);
+        runHooks('onBeforeRun', that, args);
+        ret = handle.apply(that, args);
+        runHooks('onAfterRun', that, args, ret);
         resolve(ret);
       } catch(e) {
         resolve(undefined);
         console.error('base_run ' + self.word('function_error'), e);
-        runHooks('onRunError', args, e);
+        runHooks('onRunError', that, args, e);
       }
     }), 0);
     tasks = [];
