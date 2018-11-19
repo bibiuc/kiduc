@@ -91,6 +91,27 @@ function Kiduc() {
     console.log('base_run', self.word('no_handle'), id);
     return Promise.resolve(undefined);
   };
+  this.runSync = function(that) {
+    that = (typeof that == 'string') ? {id: that} : that;
+    var ret,
+        id = that.id,
+        handle = scope[id],
+        args = slice.call(args, 1);
+    if (handle) {
+      try {
+        runHooks('onBeforeRun', that, args);
+        ret = handle.apply(that, args);
+        runHooks('onAfterRun', that, args, ret);
+        return ret;
+      } catch(e) {
+        console.error('base_run ' + self.word('function_error'), e);
+        runHooks('onRunError', that, args, e);
+        return ;
+      }
+    }
+    console.log('base_run', self.word('no_handle'), id);
+    return ;
+  };
   this.stop = function() {
     running = false;
     tasks = [];
@@ -105,10 +126,10 @@ function Kiduc() {
       try {
         runHooks('onBeforeRun', that, args);
         ret = handle.apply(that, args);
-        runHooks('onAfterRun', that, args, ret);
         resolve(ret);
+        runHooks('onAfterRun', that, args, ret);
       } catch(e) {
-        resolve(undefined);
+        resolve(ret);
         console.error('base_run ' + self.word('function_error'), e);
         runHooks('onRunError', that, args, e);
       }
