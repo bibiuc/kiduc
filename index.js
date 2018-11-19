@@ -96,7 +96,7 @@ function Kiduc() {
     var ret,
         id = that.id,
         handle = scope[id],
-        args = slice.call(args, 1);
+        args = slice.call(arguments, 1);
     if (handle) {
       try {
         runHooks('onBeforeRun', that, args);

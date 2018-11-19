@@ -10,4 +10,6 @@ base.set('startup', function() {
 base.set('env', process.env);
 base.run('startup', ['env']).then(function() {
   console.log(arguments);
+  base.runSync('startup', ['env']);
+  base.stop();
 });
