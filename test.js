@@ -12,4 +12,7 @@ base.run('startup', ['env']).then(function() {
   console.log(arguments);
   base.runSync('startup', ['env']);
   base.stop();
+  var next = base.clone();
+  next.runSync('startup', ['env']);
+  next.stop();
 });

@@ -141,6 +141,24 @@ function Kiduc() {
       });
     }
   };
+  this.clone = function() {
+    var next = new Kiduc();
+    var key, i, c_hooks, len;
+    for(key in hooks) {
+      c_hooks = hooks[key];
+      len = c_hooks.length;
+      for(i = 0; i < len; i++) {
+        next.hook(key, c_hooks[i]);
+      }
+    }
+    for(key in cache) {
+      next.cache(key, cache[key]);
+    }
+    for(key in scope) {
+      next.set(key, scope[key]);
+    }
+    return next;
+  };
   self.start();
 }
  module.exports = Kiduc;
