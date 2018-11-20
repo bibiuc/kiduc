@@ -4,6 +4,7 @@ var base = new Kiduc();
 base.set('startup', function() {
   console.log(this);
   console.log('dev');
+  throw new Error(1);
   return 'demo';
 });
 

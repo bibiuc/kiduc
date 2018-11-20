@@ -1,6 +1,6 @@
 {
   "name": "kiduc",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "代码离散存储",
   "main": "index.js",
   "scripts": {
