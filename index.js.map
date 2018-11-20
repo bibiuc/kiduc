@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "",
+  "sources": [
+    "index.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;AAAA,MAAA;;EAAM;;;IAAN,MAAA,MAAA;MAEE,WAAY,CAAA,CAAA;QACV,IAAE,CAAA,MAAA,CAAF,GAAY,CAAA;AACZ;MAFU;;MAGZ,GAAK,CAAC,IAAD,EAAO,IAAP,CAAA;eACH,IAAE,CAAA,MAAA,CAAQ,CAAA,IAAA,CAAV,GAAkB;UAChB,IAAA,EAAM,IAAK,aADK;UAEhB,OAAA,EAAS,IAAI,QAAJ,CAAa,GAAA,IAAb;QAFO;MADf;;MAKL,GAAK,CAAA,CAAA,EAAA;;IAVP;;IACE,MAAA,GAAS,MAAA,CAAO,OAAP;;;;;;EAWX,MAAM,CAAC,OAAP,GAAiB;AAZjB",
+  "sourcesContent": [
+    "class Kiduc\r\n  $scope = Symbol('scope')\r\n  constructor:() ->\r\n    @[$scope] = {}\r\n    return\r\n  add: (name, args) ->\r\n    @[$scope][name] = {\r\n      args: args[0...-1],\r\n      handler: new Function(args...)\r\n    };\r\n  run: () ->\r\n\r\nmodule.exports = Kiduc;"
+  ]
+}

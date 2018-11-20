@@ -1,165 +1,114 @@
-function Kiduc() {
-  if (!this instanceof Kiduc) {
-    return new Kiduc();
-  }
-  var self = this;
-  var scope = {};
-  var hooks = {};
-  var cache = {};
-  var running = true;
-  var tasks = [];
-  var slice = Array.prototype.slice;
-  var hookKeys = ['onBeforeSet', 'onAfterSet', 'onBeforeRun', 'onAfterRun', 'onRunError'];
-  var runHooks = function (name) {
-    try {
-      var args = slice.call(arguments, 1),
-        i = 0,
-        hs = hooks[name],
-        len = hs.length;
-      for (; i < len; i++) {
-        hs[i].apply(null, args);
-      }
-    } catch (e) {
-      console.error('base_run ' + self.word('function_error'), e);
-    }
-  };
-  (function () {
-    var len = hookKeys.length;
-    for (var i = 0; i < len; i++) {
-      hooks[hookKeys[i]] = [];
-    }
-  })();
-  this.hookKeys = hookKeys;
-  this.hook = function (target, hook, before) {
-    if (arguments.length < 2 ||
-      !hooks[target] ||
-      typeof hook != 'function') {
-      console.error('base_hook ' + self.word('arguments_error'));
-      return;
-    } else if (before === undefined || isNaN(before)) {
-      before = hooks[target].length;
-    }
-    hooks[target].splice(before, 0, hook);
-  };
-  this.word = function (word) {
-    return {
-      'arguments_error': '参数错误',
-      'scope_key_reset': '已存在的值,将被重置',
-      'unsafe_set': '不安全的设置',
-      'function_error': '运行时错误',
-      'no_handle': '未找到函数'
-    }[word];
-  };
-  this.set = function (id, func) {
-    if (arguments.length != 2) {
-      console.error('base_set ' + self.word('arguments_error'));
-      return;
-    }
-    if (scope[id]) {
-      console.warn(['base_set', self.word('scope_key_reset'), id].join(' '));
-    }
-    if (typeof func != 'function') {
-      try {
-        func = new Function('return ' + JSON.stringify(func) + ';');
-      } catch (e) {
-        console.warn(['base_set', self.word('unsafe_set'), id].join(' '));
-        func = (function (obj) {
-          return obj;
-        }).bind(null, func);
-      }
-    }
-    runHooks('onBeforeSet', arguments);
-    scope[id] = func;
-    runHooks('onAfterSet', arguments);
-  };
-  this.cache = function (id, value) {
-    if (value === undefined) {
-      return cache[id];
-    }
-    cache[id] = value;
-  };
-  this.run = function (that) {
-    that = (typeof that == 'string') ? {id: that} : that;
-    var id = that.id,
-      handle = scope[id];
-    if (handle) {
-      var args = slice.call(arguments, 1);
-      return new Promise(function (resolve) {
-        tasks.push([handle, that, resolve].concat(args));
-      });
-    }
-    console.log('base_run', self.word('no_handle'), id);
-    return Promise.resolve(undefined);
-  };
-  this.runSync = function (that) {
-    that = (typeof that == 'string') ? {id: that} : that;
-    var ret,
-      id = that.id,
-      handle = scope[id],
-      args = slice.call(arguments, 1);
-    if (handle) {
-      try {
-        runHooks('onBeforeRun', that, args);
-        ret = handle.apply(that, args);
-        runHooks('onAfterRun', that, args, ret);
-        return ret;
-      } catch (e) {
-        console.error('base_run ' + self.word('function_error'), id, e);
-        runHooks('onRunError', that, args, e);
+"use strict";
+
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _toArray(arr) { return _arrayWithHoles(arr) || _iterableToArray(arr) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+// Generated by CoffeeScript 2.3.2
+(function () {
+  var Kiduc,
+      splice = [].splice;
+
+  Kiduc = function () {
+    var $scope;
+
+    var Kiduc =
+    /*#__PURE__*/
+    function () {
+      function Kiduc(scope) {
+        _classCallCheck(this, Kiduc);
+
+        this[$scope] = {};
+        this.scope = scope;
         return;
       }
-    }
-    console.log('base_run', self.word('no_handle'), id);
-    return;
-  };
-  this.stop = function () {
-    running = false;
-    tasks = [];
-  };
-  this.start = function () {
-    process.nextTick(tasks.forEach.bind(tasks, function (args) {
-      var ret,
-        handle = args[0],
-        that = args[1],
-        resolve = args[2],
-        args = slice.call(args, 3);
-      try {
-        runHooks('onBeforeRun', that, args);
-        ret = handle.apply(that, args);
-        resolve(ret);
-        runHooks('onAfterRun', that, args, ret);
-      } catch (e) {
-        resolve(ret);
-        console.error('base_run ' + self.word('function_error'), that.id, e);
-        runHooks('onRunError', that, args, e);
-      }
-    }), 0);
-    tasks = [];
-    if (running) {
-      setTimeout(function () {
-        self.start();
-      });
-    }
-  };
-  this.clone = function () {
-    var next = new Kiduc();
-    var key, i, c_hooks, len;
-    for (key in hooks) {
-      c_hooks = hooks[key];
-      len = c_hooks.length;
-      for (i = 0; i < len; i++) {
-        next.hook(key, c_hooks[i]);
-      }
-    }
-    for (key in cache) {
-      next.cache(key, cache[key]);
-    }
-    for (key in scope) {
-      next.set(key, scope[key]);
-    }
-    return next;
-  };
-  self.start();
-}
 
-module.exports = Kiduc;
+      _createClass(Kiduc, [{
+        key: "add",
+        value: function add(name, args, defaults) {
+          var _ref, _ref2, _splice$call, _splice$call2;
+
+          var content, ref;
+          ref = args, (_ref = ref, _ref2 = _toArray(_ref), args = _ref2.slice(0), _ref), (_splice$call = splice.call(args, -1), _splice$call2 = _slicedToArray(_splice$call, 1), content = _splice$call2[0], _splice$call);
+          return this[$scope][name] = {
+            args: args,
+            defaults: _objectSpread({}, defaults),
+            content: content,
+            handler: _construct(Function, _toConsumableArray(args).concat([content]))
+          };
+        }
+      }, {
+        key: "run",
+        value: function run(name, scope) {
+          var static_args = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+          var dynamic_args = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+          var args, item, key;
+          item = this[$scope][name];
+
+          args = function () {
+            var i, len, ref, results;
+            ref = item.args;
+            results = [];
+
+            for (i = 0, len = ref.length; i < len; i++) {
+              key = ref[i];
+
+              if (dynamic_args[key]) {
+                results.push(dynamic_args[key]);
+              } else if (static_args[key]) {
+                results.push(this.run(static_args[key], scope));
+              } else {
+                results.push(item.defaults[key]);
+              }
+            }
+
+            return results;
+          }.call(this);
+
+          return item.handler.apply({
+            scope: scope,
+            global: this.scope
+          }, args);
+        }
+      }]);
+
+      return Kiduc;
+    }();
+
+    ;
+    $scope = Symbol('scope');
+    return Kiduc;
+  }.call(this);
+
+  module.exports = Kiduc;
+}).call(void 0);
