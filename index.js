@@ -55,14 +55,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
       _createClass(Kiduc, [{
         key: "add",
-        value: function add(name, args, defaults) {
+        value: function add(name, args, static_defaults, dynamic_defaults) {
           var _ref, _ref2, _splice$call, _splice$call2;
 
           var content, ref;
           ref = args, (_ref = ref, _ref2 = _toArray(_ref), args = _ref2.slice(0), _ref), (_splice$call = splice.call(args, -1), _splice$call2 = _slicedToArray(_splice$call, 1), content = _splice$call2[0], _splice$call);
           return this[$scope][name] = {
             args: args,
-            defaults: _objectSpread({}, defaults),
+            static_defaults: _objectSpread({}, static_defaults),
+            dynamic_defaults: _objectSpread({}, dynamic_defaults),
             content: content,
             handler: _construct(Function, _toConsumableArray(args).concat([content]))
           };
@@ -83,12 +84,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             for (i = 0, len = ref.length; i < len; i++) {
               key = ref[i];
 
-              if (dynamic_args[key]) {
+              if (dynamic_args.hasOwnProperty(key)) {
                 results.push(dynamic_args[key]);
-              } else if (static_args[key]) {
+              } else if (static_args.hasOwnProperty(key)) {
                 results.push(this.run(static_args[key], scope));
+              } else if (item.dynamic_defaults.hasOwnProperty(key)) {
+                results.push(item.dynamic_defaults[key]);
+              } else if (item.static_defaults.hasOwnProperty(key)) {
+                results.push(this.run(item.static_defaults[key], scope));
               } else {
-                results.push(item.defaults[key]);
+                results.push(void 0);
               }
             }
 
