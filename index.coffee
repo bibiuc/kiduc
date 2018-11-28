@@ -1,44 +1,58 @@
 hasProto = !!{}.__proto__
 hasSetProto = !!Object.setPrototypeOf
+class Args
+  getKey = (arg)->
+    if typeof arg == 'string'
+      arg
+    else
+      arg.key
+  getValue = (arg, kiduc)->
+    if typeof arg != 'string'
+      switch arg.type
+        when 'static' then arg.value
+        when 'dynamic' then kiduc.run.apply(kiduc, arg.value)
+
+  constructor: (args, kiduc)->
+    @kiduc = kiduc
+    @keys = () ->
+      getKey(arg) for arg in args
+    @values = () ->
+      getValue(arg, kiduc) for arg in args
+    @mixin = (options) ->
+      data = for key, i in @keys()
+        if options[key]
+          options[key].key = key
+          options[key]
+        else
+          args[i]
+      new Args(data, kiduc)
+      
 class Kiduc
   $scope = Symbol('scope')
   constructor:(scope) ->
     @[$scope] = {}
     @scope = scope;
     return
-  add: (name, args, static_defaults, dynamic_defaults) ->
+  add: (name, args) ->
     [args..., content] = args;
+    args = new Args(args, this)
     @[$scope][name] = {
       args: args,
-      static_defaults: {static_defaults...},
-      dynamic_defaults: {dynamic_defaults...},
       content: content,
-      handler: new Function(args..., content)
+      handler: new Function(args.keys()..., content)
     };
-  run: (name, scope, static_args = {}, dynamic_args = {}) ->
+  run: (name, scope, options) ->
     item = @[$scope][name]
     if (item)
       globalScope = @scope;
-      args = for key in item.args
-        if (dynamic_args.hasOwnProperty(key))
-          dynamic_args[key]
-        else if (static_args.hasOwnProperty(key))
-          @run(static_args[key], scope)
-        else if (item.dynamic_defaults.hasOwnProperty(key))
-          item.dynamic_defaults[key]
-        else if (item.static_defaults.hasOwnProperty(key))
-          @run(item.static_defaults[key], scope)
+      args = item.args.mixin(options).values();
       item.handler.apply({
-        scope...,
-        globalScope...
+        scope: scope,
+        global: globalScope
       }, args);
-  defaults: (name, scope) ->
-    {dynamic_default, static_defaults} = @[$scope][name]
-    ret = {dynamic_default...}
-    for key in static_defaults
-      if (!ret.hasOwnProperty(key))
-        ret[key] = @run(static_defaults[key], scope)
-    ret
+  defaults: (name) ->
+    {args} = @[$scope][name]
+    args.values();
   reset: (scope)->
     @[$scope] = {}
     @scope = scope || @scope

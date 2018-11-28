@@ -5,14 +5,14 @@
     
     var base = new Kiduc();
     
-    base.set('startup', async function(env) {
-      return 'boot';
-    });
+    base.add('startup', ["env", "return 'boot';"]);
     
-    base.set('env', process.env);
+    base.add('env', ['return process.env']);
     console.time('startup');
     (async function() {
-      await base.run('startup', ['env']);
+      await base.run('startup', null, {
+        env: {type: 'dynamic', value: ['env']}
+      });
       console.timeEnd('startup');
     })();
 ```
